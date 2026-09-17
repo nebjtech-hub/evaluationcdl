@@ -1,0 +1,44 @@
+# Configuration Netlify — Évaluations RH, Centre Diagnostic de Libreville
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# ------------------------------------------------------------------
+#  Toutes les routes sont gérées par React Router : le serveur doit
+#  renvoyer index.html au lieu de chercher un fichier sur le disque.
+#  Sans cette règle, /f/<jeton> répond 404 quand l'évaluateur ouvre
+#  le lien directement.
+# ------------------------------------------------------------------
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# ------------------------------------------------------------------
+#  En-têtes de sécurité
+# ------------------------------------------------------------------
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Les formulaires ne doivent jamais être servis depuis le cache :
+# un lien déjà soumis doit afficher l'écran « déjà transmise ».
+[[headers]]
+  for = "/f/*"
+  [headers.values]
+    Cache-Control = "no-store"
+
+# Les fichiers générés par Vite portent un hash dans leur nom :
+# ils peuvent être mis en cache indéfiniment.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
