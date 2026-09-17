@@ -90,6 +90,70 @@ function ChoixNote({ valeur, onChange, nom, manquant }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Sous-composants                                                    */
+/*                                                                     */
+/*  Ils sont définis ici, au niveau du module, et non dans le corps de */
+/*  FormulairePublic : une fonction recréée à chaque rendu est vue par */
+/*  React comme un nouveau type de composant, ce qui démonte puis      */
+/*  remonte le sous-arbre — et fait perdre le focus au champ à chaque  */
+/*  caractère saisi.                                                   */
+/* ------------------------------------------------------------------ */
+function Sommaire({ sommaire, onNaviguer }) {
+  return (
+    <nav className="space-y-1 text-sm">
+      {sommaire.map((s) => {
+        const complet = s.faits >= s.total;
+        return (
+          <a
+            key={s.id}
+            href={`#${s.id}`}
+            onClick={onNaviguer}
+            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors hover:bg-wash"
+          >
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${
+                complet ? 'bg-teal-600 text-white' : 'bg-wash text-ink-faint'
+              }`}
+            >
+              {complet ? '✓' : s.total - s.faits}
+            </span>
+            <span className={`truncate ${complet ? 'text-ink-faint' : 'text-ink-soft'}`}>{s.titre}</span>
+          </a>
+        );
+      })}
+    </nav>
+  );
+}
+
+function Section({ id, titre, indication, children }) {
+  return (
+    <section id={id} className="card scroll-mt-24 p-6">
+      <h2 className="font-serif text-lg leading-snug">{titre}</h2>
+      {indication && <p className="mt-1 text-sm text-ink-faint">{indication}</p>}
+      <div className="mt-5">{children}</div>
+    </section>
+  );
+}
+
+function ChampNote({ valeur, onChange, bareme, libelle = 'Note' }) {
+  return (
+    <div className="mt-2 flex items-center gap-2 text-sm">
+      <span className="text-ink-faint">{libelle}</span>
+      <input
+        type="number"
+        min="0"
+        max={bareme}
+        inputMode="numeric"
+        className="field w-20 py-1.5 text-center"
+        value={valeur ?? ''}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <span className="text-ink-faint">/ {bareme}</span>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Formulaire public                                                  */
 /* ------------------------------------------------------------------ */
 export default function FormulairePublic() {
@@ -366,56 +430,6 @@ export default function FormulairePublic() {
   const ton = tonPour(score.appreciation);
   const estFinContrat = template.categorie === 'fin-contrat';
 
-  /* ------------------------ Sous-composants ------------------------ */
-  const Sommaire = () => (
-    <nav className="space-y-1 text-sm">
-      {sommaire.map((s) => {
-        const complet = s.faits >= s.total;
-        return (
-          <a
-            key={s.id}
-            href={`#${s.id}`}
-            onClick={() => setSommaireOuvert(false)}
-            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors hover:bg-wash"
-          >
-            <span
-              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${
-                complet ? 'bg-teal-600 text-white' : 'bg-wash text-ink-faint'
-              }`}
-            >
-              {complet ? '✓' : s.total - s.faits}
-            </span>
-            <span className={`truncate ${complet ? 'text-ink-faint' : 'text-ink-soft'}`}>{s.titre}</span>
-          </a>
-        );
-      })}
-    </nav>
-  );
-
-  const Section = ({ id, titre, indication, children }) => (
-    <section id={id} className="card scroll-mt-24 p-6">
-      <h2 className="font-serif text-lg leading-snug">{titre}</h2>
-      {indication && <p className="mt-1 text-sm text-ink-faint">{indication}</p>}
-      <div className="mt-5">{children}</div>
-    </section>
-  );
-
-  const ChampNote = ({ valeur, onChange, bareme, libelle = 'Note' }) => (
-    <div className="mt-2 flex items-center gap-2 text-sm">
-      <span className="text-ink-faint">{libelle}</span>
-      <input
-        type="number"
-        min="0"
-        max={bareme}
-        inputMode="numeric"
-        className="field w-20 py-1.5 text-center"
-        value={valeur ?? ''}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <span className="text-ink-faint">/ {bareme}</span>
-    </div>
-  );
-
   return (
     <div className="min-h-screen pb-28">
       {/* En-tête */}
@@ -448,7 +462,7 @@ export default function FormulairePublic() {
             <p className="mb-3 px-2.5 text-xs font-semibold uppercase tracking-wide text-ink-faint">
               Sommaire
             </p>
-            <Sommaire />
+            <Sommaire sommaire={sommaire} onNaviguer={() => setSommaireOuvert(false)} />
           </div>
         </aside>
 
@@ -870,7 +884,7 @@ export default function FormulairePublic() {
 
         {sommaireOuvert && (
           <div className="animate-fade-in max-h-72 overflow-y-auto border-t border-rule bg-white px-3 py-3 lg:hidden">
-            <Sommaire />
+            <Sommaire sommaire={sommaire} onNaviguer={() => setSommaireOuvert(false)} />
           </div>
         )}
       </div>
